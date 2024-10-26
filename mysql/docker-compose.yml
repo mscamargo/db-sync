@@ -1,0 +1,69 @@
+services:
+  db_source:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: source_db
+    volumes:
+      - ./dump:/tmp/dump
+    ports:
+      - "3306:3306"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.50'
+        reservations:
+          memory: 256M
+
+  db_target:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: target_db
+    ports:
+      - "33006:3306"
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 2G
+    #       cpus: '0.50'
+    #     reservations:
+    #       memory: 256M
+
+  app:
+    image: node
+    user: node
+    working_dir: /home/node/app
+    volumes:
+      - ./bin:/home/node/bin
+    ports:
+      - "3000:3000"
+    command: tail -f /dev/null
+    depends_on:
+      - db_source
+      - db_target
+    deploy:
+      # resources:
+      #   limits:
+      #     memory: 1G
+      #     cpus: '0.25'
+      #   reservations:
+      #     memory: 128M
+
+  phpmyadmin:
+    image: phpmyadmin
+    environment:
+      PMA_ARBITRARY: 1
+    ports:
+      - "8080:80"
+    depends_on:
+      - db_source
+      - db_target
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
